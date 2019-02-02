@@ -7,10 +7,6 @@
     "node": ">= 6.7.0",
     "npm": ">= 4.0.0"
   },
-  "files": [
-    "dist",
-    "src"
-  ],
   "scripts": {
     "clean:dist": "rm -rf dist",
     "clean:examples": "rm -rf examples",
