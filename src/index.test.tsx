@@ -1,21 +1,24 @@
 // setup file
 import { configure } from 'enzyme';
-import Adapter from 'enzyme-adapter-react-15';
+import * as Enzyme from "enzyme";
+import * as Adapter from "enzyme-adapter-react-16";
 
 configure({ adapter: new Adapter() });
 import * as React from 'react';
 import { shallow } from 'enzyme';
-import SuperTreeview from '.';
-import sinon from 'sinon';
-import chai, { expect } from 'chai';
-import sinonChai from 'sinon-chai';
+import SuperTreeview from './index';
+import * as sinon from 'sinon';
+import * as chai from 'chai';
+import { expect } from 'chai'
+import * as sinonChai from 'sinon-chai';
 chai.use(sinonChai);
 
 const standardProps = {
     data: [
         {
             id: 1,
-            name: 'PARENT 1'
+            name: 'PARENT 1',
+            isChecked: false
         },
         {
             id: 2,
@@ -48,6 +51,8 @@ const standardProps = {
 };
 
 
+const superTreeView = <SuperTreeview {...standardProps} />
+
 describe('<SuperTreeview />', () => {
     let sandbox, component, componentInstance, componentWrapElement;
 
@@ -60,7 +65,7 @@ describe('<SuperTreeview />', () => {
     });
 
     describe('componentWillMount()', () => {
-        component = shallow(<SuperTreeview {...standardProps} />);
+        component = shallow(superTreeView);
         componentWrapElement = component.find('.super-treeview');
         let transitionGroupElement = componentWrapElement.find(
             'TransitionGroup'
@@ -79,7 +84,7 @@ describe('<SuperTreeview />', () => {
         });
 
         it('should print node children', () => {
-            const numberOfChildren = standardProps.data[1].children.length;
+            const numberOfChildren = (standardProps.data[1].children || []).length;
 
             const secondChildComponent = component
                 .find('SuperTreeview')
@@ -243,10 +248,10 @@ describe('<SuperTreeview />', () => {
             }
         ];
 
-        component, sandbox;
+        sandbox;
 
         beforeEach(() => {
-            component = shallow(<SuperTreeview {...standardProps} />);
+            component = shallow(superTreeView);
             sandbox = sinon.sandbox.create();
         });
 
@@ -420,7 +425,6 @@ describe('<SuperTreeview />', () => {
                     node2.isChecked = true;
                     node3.isChecked = true;
                     node4.isChecked = true;
-
                     expect(onCheckToggleCbStub).to.have.been.calledWith(
                         [node2, node3, node4],
                         depth
@@ -499,7 +503,7 @@ describe('<SuperTreeview />', () => {
         });
         it('should return nodes when nodeArray is not empty', () => {
             const nodeArray = [{}, {}, {}];
-            component = shallow(<SuperTreeview {...standardProps} />);
+            component = shallow(superTreeView);
             const nodes = component.instance().printNodes(nodeArray);
             const nodesElement = shallow(nodes);
             expect(nodesElement.find('.super-treeview-node')).to.have.length(
@@ -512,7 +516,7 @@ describe('<SuperTreeview />', () => {
         let component, componentInstance;
 
         it('should return null when isExpanded is false', () => {
-            component = shallow(<SuperTreeview {...standardProps} />);
+            component = shallow(superTreeView);
             componentInstance = component.instance();
             const node = { isExpanded: false };
             expect(componentInstance.printChildren(node)).to.be.equal(null);
@@ -534,7 +538,7 @@ describe('<SuperTreeview />', () => {
             });
 
             it('should return SuperTreeview when isChildrenLoading is false', () => {
-                component = shallow(<SuperTreeview {...standardProps} />);
+                component = shallow(superTreeView);
                 componentInstance = component.instance();
                 const node = {
                     isExpanded: true,
