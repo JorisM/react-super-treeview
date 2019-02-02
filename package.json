@@ -1,6 +1,6 @@
 {
   "name": "react-super-treeview",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "React Super Treeview",
   "main": "dist/main.js",
   "engines": {
@@ -8,7 +8,8 @@
     "npm": ">= 4.0.0"
   },
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "scripts": {
     "clean:dist": "rm -rf dist",
