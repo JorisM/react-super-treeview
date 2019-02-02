@@ -1,20 +1,19 @@
-// import "./style.scss";
+import "./style.scss";
 import * as React from "react";
 import { isNil, isEmpty, isEqual, find, get, cloneDeep } from "lodash";
 import { TransitionGroup, CSSTransition } from "react-transition-group";
-import { any } from "prop-types";
 
 interface SuperTreeviewProps {
-    data: Record<any, any> | Array <Record<any, any>>;
+    data: Record<any, any> | Array<Record<any, any>>;
     depth?: number;
 
     deleteElement?: JSX.Element;
 
     getStyleClassCb?: (any) => any;
 
-    isCheckable?: (any, depth?: number) => any;
-    isDeletable?: (any, depth?: number) => any;
-    isExpandable?: (any, depth?: number) => any;
+    isCheckable: (any, depth?: number) => boolean;
+    isDeletable: (any, depth?: number) => boolean;
+    isExpandable: (any, depth?: number) => boolean;
 
     keywordChildren?: string;
     keywordChildrenLoading?: string;
@@ -24,27 +23,21 @@ interface SuperTreeviewProps {
     loadingElement?: JSX.Element;
     noChildrenAvailableMessage?: string;
 
-    onCheckToggleCb?: (any, depth?: number) => any;
-    onDeleteCb?: (any, newdata: any, depth?: number) => any;
-    onExpandToggleCb?: (any, depth?: number) => any;
-    onUpdateCb?: (any, depth?: number) => any;
+    onCheckToggleCb: (any, depth?: number) => any;
+    onDeleteCb: (any, newdata: any, depth?: number) => any;
+    onExpandToggleCb: (any, depth?: number) => any;
+    onUpdateCb: (any, depth?: number) => any;
 
     transitionEnterTimeout?: number;
     transitionExitTimeout?: number;
 }
 interface SuperTreeviewState {
-    lastCheckToggledNodeIndex: number;
+    lastCheckToggledNodeIndex: number | null;
 
     data: Array<Record<any, any>>;
     depth: number;
 
     deleteElement: JSX.Element;
-
-    getStyleClassCb: (any) => any;
-
-    isCheckable: (any, depth?: number) => any;
-    isDeletable: (any, depth?: number) => any;
-    isExpandable: (any, depth?: number) => any;
 
     keywordChildren: string;
     keywordChildrenLoading: string;
@@ -54,11 +47,6 @@ interface SuperTreeviewState {
     loadingElement: JSX.Element;
     noChildrenAvailableMessage: string;
 
-    onCheckToggleCb: (any, depth?: number) => any;
-    onDeleteCb: (any, newdata: any, depth?: number) => any;
-    onExpandToggleCb: (any, depth?: number) => any;
-    onUpdateCb: (any, depth?: number) => any;
-
     transitionEnterTimeout: number;
     transitionExitTimeout: number;
 }
@@ -67,6 +55,16 @@ class SuperTreeview extends React.Component<
     SuperTreeviewProps,
     SuperTreeviewState
 > {
+    static defaultProps = {
+        lastCheckToggledNodeIndex: null,
+        isDeletable: () => true,
+        isCheckable: () => true,
+        isExpandable: () => true,
+        onCheckToggleCb: (/* Array of nodes, depth */) => {},
+        onDeleteCb: () => true,
+        onExpandToggleCb: () => {},
+        onUpdateCb: () => {}
+    };
     // handleUpdate: any
     // printNodes: any
     // printChildren: any
@@ -93,55 +91,32 @@ class SuperTreeview extends React.Component<
         this.handleCheckToggle = this.handleCheckToggle.bind(this);
         this.handleDelete = this.handleDelete.bind(this);
         this.handleExpandToggle = this.handleExpandToggle.bind(this);
+        this.setState(this.makeState(props));
     }
 
     componentWillMount() {
+        console.log("componentWillMount");
+        this.setState(this.makeState(this.props));
+    }
+
+    makeState(props: SuperTreeviewProps) {
         const {
             data,
             depth,
             deleteElement,
-            getStyleClassCb,
-            isCheckable,
             keywordChildren,
-            isDeletable,
-            isExpandable,
             keywordChildrenLoading,
             loadingElement,
             keywordKey,
             keywordLabel,
-            noChildrenAvailableMessage,
-            onCheckToggleCb,
-            onDeleteCb,
-            onUpdateCb,
-            onExpandToggleCb
-        } = this.props;
+            noChildrenAvailableMessage
+        } = props;
 
-        this.setState({
+        return {
             data: data instanceof Array ? data : [data],
-            lastCheckToggledNodeIndex: 0,
+            lastCheckToggledNodeIndex: null,
             depth: depth || 0,
             deleteElement: deleteElement || <div>(X)</div>,
-            getStyleClassCb:
-                getStyleClassCb ||
-                ((/* node, depth */) => {
-                    return "";
-                }),
-            isCheckable:
-                isCheckable ||
-                ((/* node, depth */) => {
-                    return true;
-                }),
-            isDeletable:
-                isDeletable ||
-                ((/* node, depth */) => {
-                    return true;
-                }),
-            isExpandable:
-                isExpandable ||
-                ((/* node, depth */) => {
-                    return true;
-                }),
-
             keywordChildren: keywordChildren || "children",
             keywordChildrenLoading:
                 keywordChildrenLoading || "isChildrenLoading",
@@ -151,21 +126,12 @@ class SuperTreeview extends React.Component<
             loadingElement: loadingElement || <div>loading...</div>,
 
             noChildrenAvailableMessage:
-                noChildrenAvailableMessage || "No data found",
-
-            onCheckToggleCb:
-                onCheckToggleCb || ((/* Array of nodes, depth */) => {}),
-            onDeleteCb:
-                onDeleteCb ||
-                ((/* node, updatedData, depth */) => {
-                    return true;
-                }),
-            onExpandToggleCb: onExpandToggleCb || ((/* node, depth */) => {}),
-            onUpdateCb: onUpdateCb || ((/* updatedData, depth */) => {})
-        });
+                noChildrenAvailableMessage || "No data found"
+        };
     }
 
     componentWillReceiveProps(nextProps: SuperTreeviewProps) {
+        console.log("componentWillReceiveProps", nextProps);
         this.setState({
             data:
                 nextProps.data instanceof Array
@@ -175,18 +141,26 @@ class SuperTreeview extends React.Component<
     }
 
     handleUpdate(updatedData) {
-        const { depth, onUpdateCb } = this.state;
-
-        onUpdateCb(updatedData, depth);
+        const { depth, onUpdateCb } = this.props;
+        this.setState({ data: updatedData });
+        if (onUpdateCb)
+            onUpdateCb(
+                updatedData ? updatedData.length === 1
+                    ? updatedData[0]
+                    : updatedData : null,
+                depth
+            );
     }
 
     handleCheckToggle(node: any, e) {
-        const { onCheckToggleCb, depth } = this.state;
+        const { onCheckToggleCb, depth } = this.props;
         const { lastCheckToggledNodeIndex, data } = this.state;
-        const currentNode = find(data, node);
-        const currentNodeIndex = data.indexOf(currentNode);
+        const dataClone = cloneDeep(this.state.data);
+        const currentNode = find(dataClone, node);
+        const currentNodeIndex = dataClone.indexOf(currentNode);
         const getToggledNodes = () => {
-            if (e.shiftKey && !isNil(lastCheckToggledNodeIndex)) {
+            console.log("shiftKey", e.shiftKey);
+            if (e.shiftKey && !(lastCheckToggledNodeIndex === null)) {
                 const rangeStart = Math.min(
                     currentNodeIndex,
                     lastCheckToggledNodeIndex
@@ -196,7 +170,7 @@ class SuperTreeview extends React.Component<
                     lastCheckToggledNodeIndex
                 );
 
-                const nodeRange = data.slice(rangeStart, rangeEnd + 1);
+                const nodeRange = dataClone.slice(rangeStart, rangeEnd + 1);
 
                 return nodeRange.map(node => {
                     node.isChecked = e.target.checked;
@@ -208,41 +182,46 @@ class SuperTreeview extends React.Component<
             }
         };
 
-        onCheckToggleCb(getToggledNodes(), depth);
+        const nodes = getToggledNodes();
+        console.log("nodesss", nodes);
+
+        if (onCheckToggleCb) onCheckToggleCb(nodes, depth);
         this.setState({ lastCheckToggledNodeIndex: currentNodeIndex });
-        this.handleUpdate(data);
+        this.handleUpdate(nodes);
     }
 
     handleDelete(node) {
-        const { onDeleteCb, depth } = this.state;
+        const { onDeleteCb, depth } = this.props;
         const data = cloneDeep(this.state.data);
 
         const newData = data.filter(nodeItem => {
             return !isEqual(node, nodeItem);
         });
 
-        onDeleteCb(node, newData, depth) && this.handleUpdate(newData);
+        if (onDeleteCb)
+            onDeleteCb(node, newData, depth) && this.handleUpdate(newData);
     }
 
     handleExpandToggle(node) {
-        const { onExpandToggleCb, depth } = this.state;
+        console.log("fooooo");
+        const { onExpandToggleCb, depth } = this.props;
         const data = cloneDeep(this.state.data);
         const currentNode = find(data, node);
 
         currentNode.isExpanded = !currentNode.isExpanded;
 
-        onExpandToggleCb(currentNode, depth);
+        if (onExpandToggleCb) onExpandToggleCb(currentNode, depth);
         this.handleUpdate(data);
     }
 
     printCheckbox(node) {
-        const { isCheckable, keywordLabel, depth } = this.state;
+        const { isCheckable, keywordLabel, depth } = this.props;
 
         if (isCheckable(node, depth)) {
             return (
                 <input
                     type="checkbox"
-                    name={node[keywordLabel]}
+                    name={node[keywordLabel || 0]}
                     onChange={e => {
                         this.handleCheckToggle(node, e);
                     }}
@@ -254,9 +233,9 @@ class SuperTreeview extends React.Component<
     }
 
     printDeleteButton(node) {
-        const { isDeletable, depth, deleteElement } = this.state;
+        const { isDeletable, depth, deleteElement } = this.props;
 
-        if (isDeletable(node, depth)) {
+        if (!isDeletable || isDeletable(node, depth)) {
             return (
                 <div
                     className="delete-btn"
@@ -274,9 +253,9 @@ class SuperTreeview extends React.Component<
         const className = node.isExpanded
             ? "super-treeview-triangle-btn-down"
             : "super-treeview-triangle-btn-right";
-        const { isExpandable, depth } = this.state;
+        const { isExpandable, depth } = this.props;
 
-        if (isExpandable(node, depth)) {
+        if (isExpandable && isExpandable(node, depth)) {
             return (
                 <div
                     className={`super-treeview-triangle-btn ${className}`}
@@ -324,14 +303,13 @@ class SuperTreeview extends React.Component<
     }
 
     printNodes(nodeArray) {
-        console.log(nodeArray);
+        const { getStyleClassCb } = this.props;
         const {
             keywordKey,
             keywordLabel,
             depth,
             transitionEnterTimeout,
-            transitionExitTimeout,
-            getStyleClassCb
+            transitionExitTimeout
         } = this.state;
         const {
             printExpandButton,
@@ -365,7 +343,9 @@ class SuperTreeview extends React.Component<
                                   <div
                                       className={
                                           "super-treeview-node" +
-                                          getStyleClassCb(node)
+                                          (getStyleClassCb
+                                              ? getStyleClassCb(node)
+                                              : "")
                                       }
                                   >
                                       <div className="super-treeview-node-content">
@@ -427,11 +407,9 @@ class SuperTreeview extends React.Component<
     }
 
     render() {
-        return (
-            <div className="super-treeview">
-                {this.printNodes(this.state.data)}
-            </div>
-        );
+        const { data } = this.state;
+
+        return <div className="super-treeview">{this.printNodes(data)}</div>;
     }
 }
 

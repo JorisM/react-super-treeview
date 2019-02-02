@@ -51,13 +51,12 @@ const standardProps = {
 };
 
 
-const superTreeView = <SuperTreeview {...standardProps} />
 
 describe('<SuperTreeview />', () => {
     let sandbox, component, componentInstance, componentWrapElement;
 
     beforeEach(() => {
-        sandbox = sinon.sandbox.create();
+        sandbox = sinon.createSandbox();
     });
 
     afterEach(() => {
@@ -65,7 +64,7 @@ describe('<SuperTreeview />', () => {
     });
 
     describe('componentWillMount()', () => {
-        component = shallow(superTreeView);
+        component = shallow(<SuperTreeview {...standardProps} />);
         componentWrapElement = component.find('.super-treeview');
         let transitionGroupElement = componentWrapElement.find(
             'TransitionGroup'
@@ -251,8 +250,8 @@ describe('<SuperTreeview />', () => {
         sandbox;
 
         beforeEach(() => {
-            component = shallow(superTreeView);
-            sandbox = sinon.sandbox.create();
+            component = shallow(<SuperTreeview {...standardProps} />);
+            sandbox = sinon.createSandbox();
         });
 
         afterEach(() => {
@@ -260,7 +259,10 @@ describe('<SuperTreeview />', () => {
         });
 
         it('should update props', () => {
-            let setStateSpy = sandbox.spy(SuperTreeview.prototype, 'setState');
+            let setStateSpy = sandbox.spy(
+                SuperTreeview.prototype,
+                "componentWillReceiveProps"
+            );
 
             component.setProps({ data: newData });
             expect(setStateSpy).to.have.been.calledOnce;
@@ -331,15 +333,14 @@ describe('<SuperTreeview />', () => {
 
         describe('When 1 node is check toggled', () => {
             it('should check checkbox', () => {
-                let event = { target: { checked: true } };
+                let eventSinon = { target: { checked: true } };
                 let node = standardProps.data[0];
 
-                checkbox.simulate('click', event);
+                checkbox.simulate("click", eventSinon);
 
-                expect(handleCheckToggleSpy).to.have.been.calledWith(
-                    node,
-                    event
-                );
+                expect(
+                    handleCheckToggleSpy
+                ).to.have.been.calledWith(node, eventSinon);
             });
 
             it('should uncheck checkbox', () => {
@@ -503,7 +504,7 @@ describe('<SuperTreeview />', () => {
         });
         it('should return nodes when nodeArray is not empty', () => {
             const nodeArray = [{}, {}, {}];
-            component = shallow(superTreeView);
+            component = shallow(<SuperTreeview {...standardProps} />);
             const nodes = component.instance().printNodes(nodeArray);
             const nodesElement = shallow(nodes);
             expect(nodesElement.find('.super-treeview-node')).to.have.length(
@@ -516,7 +517,7 @@ describe('<SuperTreeview />', () => {
         let component, componentInstance;
 
         it('should return null when isExpanded is false', () => {
-            component = shallow(superTreeView);
+            component = shallow(<SuperTreeview {...standardProps} />);
             componentInstance = component.instance();
             const node = { isExpanded: false };
             expect(componentInstance.printChildren(node)).to.be.equal(null);
@@ -538,7 +539,7 @@ describe('<SuperTreeview />', () => {
             });
 
             it('should return SuperTreeview when isChildrenLoading is false', () => {
-                component = shallow(superTreeView);
+                component = shallow(<SuperTreeview {...standardProps} />);
                 componentInstance = component.instance();
                 const node = {
                     isExpanded: true,
@@ -636,7 +637,7 @@ describe('<SuperTreeview />', () => {
             handleExpandToggleSpy;
 
         beforeEach(() => {
-            sandbox = sinon.sandbox.create();
+            sandbox = sinon.createSandbox();
 
             onExpandToggleCbStub = sandbox.stub();
 
