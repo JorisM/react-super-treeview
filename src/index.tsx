@@ -5,7 +5,7 @@ import { TransitionGroup, CSSTransition } from "react-transition-group";
 import { any } from "prop-types";
 
 interface SuperTreeviewProps {
-    data: any[];
+    data: Record<any, any>;
     depth: number;
 
     deleteElement: JSX.Element;
@@ -35,7 +35,7 @@ interface SuperTreeviewProps {
 interface SuperTreeviewState {
     lastCheckToggledNodeIndex: number;
 
-    data: any[];
+    data: Array<Record<any, any>>;
     depth: number;
 
     deleteElement: JSX.Element;
@@ -117,7 +117,7 @@ class SuperTreeview extends React.Component<
         } = this.props;
 
         this.setState({
-            data: data,
+            data: [data],
             lastCheckToggledNodeIndex: 0,
             depth: depth || 0,
             deleteElement: deleteElement || <div>(X)</div>,
@@ -177,10 +177,9 @@ class SuperTreeview extends React.Component<
         onUpdateCb(updatedData, depth);
     }
 
-    handleCheckToggle(node, e) {
+    handleCheckToggle(node: any, e) {
         const { onCheckToggleCb, depth } = this.props;
-        const { lastCheckToggledNodeIndex } = this.state;
-        const data = cloneDeep(this.state.data);
+        const { lastCheckToggledNodeIndex, data } = this.state;
         const currentNode = find(data, node);
         const currentNodeIndex = data.indexOf(currentNode);
         const getToggledNodes = () => {

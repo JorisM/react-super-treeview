@@ -21,11 +21,6 @@ const config = {
         strictExportPresence: true,
         rules: [
             {
-                test: /\.js$/,
-                include: /src/,
-                loaders: ["babel-loader"]
-            },
-            {
                 test: /\.scss/,
                 use: ExtractTextPlugin.extract({
                     fallback: "style-loader",
