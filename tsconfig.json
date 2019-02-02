@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es5",
+    "sourceMap": true,
+    "jsx": "react",
+    "noEmit": false,
+    "removeComments": true,
+    "isolatedModules": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": false,
+    "noImplicitAny": false,
+    "noFallthroughCasesInSwitch": true,
+    "declaration": false,
+    "baseUrl": "./",
+    "lib": [
+      "dom",
+      "es2015",
+      "es2015.core"
+    ]
+  },
+  "exclude": [
+    "node_modules"
+  ],
+  "include": [
+    "src/**/*", "config/jest/mocks/i18n.js", "config/jest/mocks/i18n.ts"
+  ]
+}
