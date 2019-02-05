@@ -1,6 +1,6 @@
 import "./style.scss";
 import * as React from "react";
-import { isNil, isEmpty, isEqual, find, get, cloneDeep } from "lodash";
+import { find } from "lodash";
 import { TransitionGroup, CSSTransition } from "react-transition-group";
 
 interface SuperTreeviewProps {
@@ -95,7 +95,6 @@ class SuperTreeview extends React.Component<
     }
 
     componentWillMount() {
-        console.log("componentWillMount");
         this.setState(this.makeState(this.props));
     }
 
@@ -131,7 +130,6 @@ class SuperTreeview extends React.Component<
     }
 
     componentWillReceiveProps(nextProps: SuperTreeviewProps) {
-        console.log("componentWillReceiveProps", nextProps);
         this.setState({
             data:
                 nextProps.data instanceof Array
@@ -145,9 +143,11 @@ class SuperTreeview extends React.Component<
         this.setState({ data: updatedData });
         if (onUpdateCb)
             onUpdateCb(
-                updatedData ? updatedData.length === 1
-                    ? updatedData[0]
-                    : updatedData : null,
+                updatedData
+                    ? updatedData.length === 1
+                        ? updatedData[0]
+                        : updatedData
+                    : null,
                 depth
             );
     }
@@ -155,11 +155,10 @@ class SuperTreeview extends React.Component<
     handleCheckToggle(node: any, e) {
         const { onCheckToggleCb, depth } = this.props;
         const { lastCheckToggledNodeIndex, data } = this.state;
-        const dataClone = cloneDeep(this.state.data);
+        const dataClone = {...this.state.data}
         const currentNode = find(dataClone, node);
         const currentNodeIndex = dataClone.indexOf(currentNode);
         const getToggledNodes = () => {
-            console.log("shiftKey", e.shiftKey);
             if (e.shiftKey && !(lastCheckToggledNodeIndex === null)) {
                 const rangeStart = Math.min(
                     currentNodeIndex,
@@ -183,7 +182,6 @@ class SuperTreeview extends React.Component<
         };
 
         const nodes = getToggledNodes();
-        console.log("nodesss", nodes);
 
         if (onCheckToggleCb) onCheckToggleCb(nodes, depth);
         this.setState({ lastCheckToggledNodeIndex: currentNodeIndex });
@@ -192,10 +190,10 @@ class SuperTreeview extends React.Component<
 
     handleDelete(node) {
         const { onDeleteCb, depth } = this.props;
-        const data = cloneDeep(this.state.data);
+        const data = {...this.state.data}
 
         const newData = data.filter(nodeItem => {
-            return !isEqual(node, nodeItem);
+            return node.id !== nodeItem.id;
         });
 
         if (onDeleteCb)
@@ -203,9 +201,8 @@ class SuperTreeview extends React.Component<
     }
 
     handleExpandToggle(node) {
-        console.log("fooooo");
         const { onExpandToggleCb, depth } = this.props;
-        const data = cloneDeep(this.state.data);
+        const data = { ...this.state.data };
         const currentNode = find(data, node);
 
         currentNode.isExpanded = !currentNode.isExpanded;
@@ -331,10 +328,10 @@ class SuperTreeview extends React.Component<
 
         return (
             <TransitionGroup>
-                {isEmpty(nodeArray)
+                {nodeArray.length === 0
                     ? this.printNoChildrenMessage()
                     : nodeArray.map((node, index) => {
-                          const nodeText = get(node, keywordLabel, "");
+                          const nodeText = node[keywordLabel] || "";
                           return (
                               <CSSTransition
                                   {...nodeTransitionProps}
@@ -375,11 +372,11 @@ class SuperTreeview extends React.Component<
         }
 
         const { keywordChildren, keywordChildrenLoading, depth } = this.state;
-        const isChildrenLoading = get(node, keywordChildrenLoading, false);
+        const isChildrenLoading = node[keywordChildrenLoading] || false
         let childrenElement;
 
         if (isChildrenLoading) {
-            childrenElement = get(this.props, "loadingElement");
+            childrenElement = this.props.loadingElement
         } else {
             childrenElement = (
                 <SuperTreeview
@@ -398,7 +395,7 @@ class SuperTreeview extends React.Component<
         );
 
         function onChildrenUpdateCb(updatedData) {
-            const data = cloneDeep(this.state.data);
+            const data = { ...this.state.data };
             const currentNode = find(data, node);
 
             currentNode[keywordChildren] = updatedData;
