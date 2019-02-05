@@ -1,6 +1,6 @@
 import "./style.scss";
 import * as React from "react";
-import { find } from "lodash";
+import { find, deepClone } from "lodash";
 import { TransitionGroup, CSSTransition } from "react-transition-group";
 
 interface SuperTreeviewProps {
@@ -155,7 +155,7 @@ class SuperTreeview extends React.Component<
     handleCheckToggle(node: any, e) {
         const { onCheckToggleCb, depth } = this.props;
         const { lastCheckToggledNodeIndex, data } = this.state;
-        const dataClone = {...this.state.data}
+        const dataClone = deepClone(data)
         const currentNode = find(dataClone, node);
         const currentNodeIndex = dataClone.indexOf(currentNode);
         const getToggledNodes = () => {
@@ -190,7 +190,7 @@ class SuperTreeview extends React.Component<
 
     handleDelete(node) {
         const { onDeleteCb, depth } = this.props;
-        const data = {...this.state.data}
+        const data = deepClone(this.state.data)
 
         const newData = data.filter(nodeItem => {
             return node.id !== nodeItem.id;
@@ -202,7 +202,7 @@ class SuperTreeview extends React.Component<
 
     handleExpandToggle(node) {
         const { onExpandToggleCb, depth } = this.props;
-        const data = { ...this.state.data };
+        const data = deepClone(this.state.data);
         const currentNode = find(data, node);
 
         currentNode.isExpanded = !currentNode.isExpanded;
@@ -395,7 +395,7 @@ class SuperTreeview extends React.Component<
         );
 
         function onChildrenUpdateCb(updatedData) {
-            const data = { ...this.state.data };
+            const data = deepClone(this.state.data);
             const currentNode = find(data, node);
 
             currentNode[keywordChildren] = updatedData;
