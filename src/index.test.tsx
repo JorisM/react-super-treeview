@@ -310,7 +310,6 @@ describe('<SuperTreeview />', () => {
                 'handleCheckToggle'
             );
             handleUpdateStub = sandbox.spy(componentInstance, 'handleUpdate');
-
             checkbox = component
                 .find('.super-treeview')
                 .find('TransitionGroup')
